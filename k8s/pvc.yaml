@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: portal-facturacion-uploads
+  namespace: default
+  labels:
+    app: portal-facturacion
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  # Ajusta según necesidad
+  # storageClassName: standard  # Descomenta y ajusta según tu cluster

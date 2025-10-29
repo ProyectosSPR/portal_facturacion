@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Error - Portal de Facturación{% endblock %}
+
+{% block content %}
+<div class="success-icon" style="color: #e74c3c;">❌</div>
+
+<h1 style="text-align: center; color: #e74c3c;">Error</h1>
+<h2 style="text-align: center;">{{ message }}</h2>
+
+<a href="{{ url_for('index') }}" class="btn" style="margin-top: 30px; display: inline-block; text-align: center; text-decoration: none;">
+    Volver al Inicio
+</a>
+
+{% endblock %}

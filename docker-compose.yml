@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  portal-facturacion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portal-facturacion
+    image: portal-facturacion:latest
+
+    # Puerto expuesto
+    ports:
+      - "5000:5000"
+
+    # Variables de entorno desde archivo .env
+    env_file:
+      - .env
+
+    # Volúmenes para persistencia
+    volumes:
+      # Uploads temporales (opcional, puedes usar volumen nombrado)
+      - ./uploads:/app/uploads
+      # Si quieres desarrollo con hot-reload, descomenta:
+      # - .:/app
+
+    # Reinicio automático
+    restart: unless-stopped
+
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Recursos (opcional, ajusta según tu servidor)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Red (por si necesitas conectar con otros servicios)
+    networks:
+      - facturacion-network
+
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  facturacion-network:
+    driver: bridge
+
+# Volúmenes nombrados (opcional)
+volumes:
+  uploads-data:

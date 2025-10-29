@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal-facturacion
+  namespace: default
+  labels:
+    app: portal-facturacion
+spec:
+  replicas: 2  # Escala horizontal
+  selector:
+    matchLabels:
+      app: portal-facturacion
+  template:
+    metadata:
+      labels:
+        app: portal-facturacion
+    spec:
+      containers:
+      - name: flask-app
+        image: portal-facturacion:latest
+        imagePullPolicy: IfNotPresent  # Cambiar a Always si usas registry
+        ports:
+        - containerPort: 5000
+          name: http
+          protocol: TCP
+
+        # Variables de entorno desde ConfigMap y Secret
+        envFrom:
+        - configMapRef:
+            name: portal-facturacion-config
+        - secretRef:
+            name: portal-facturacion-secret
+
+        # Volumen para uploads
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/uploads
+
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        # Recursos (ajusta según tu cluster)
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+
+      # Volúmenes
+      volumes:
+      - name: uploads
+        persistentVolumeClaim:
+          claimName: portal-facturacion-uploads
+
+      # Política de reinicio
+      restartPolicy: Always
+
+      # Security context
+      securityContext:
+        fsGroup: 1000  # Mismo que el usuario appuser en Dockerfile

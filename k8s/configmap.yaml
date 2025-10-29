@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portal-facturacion-config
+  namespace: default
+  labels:
+    app: portal-facturacion
+data:
+  # Flask
+  UPLOAD_FOLDER: "/app/uploads"
+
+  # PostgreSQL - Host y puerto (no sensibles)
+  POSTGRES_HOST: "10.107.55.29"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "mercadoLibre"
+  POSTGRES_USER: "dml"
+
+  # n8n - URL del webhook
+  N8N_WEBHOOK_URL: "https://aut.automateai.com.mx:5678/webhook/a86064e4-d5ef-4abe-85cd-be0362757f88"
+
+  # Odoo - URLs y usuario (no sensibles)
+  ODOO_URL: "https://dml-medica.com/"
+  ODOO_DB: "Dml-Medica"
+  ODOO_USERNAME: "automatizaciones@dml-medica.com"

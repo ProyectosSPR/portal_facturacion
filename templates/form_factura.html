@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitar Factura - Pedido {{ order.order_id }}{% endblock %}
+
+{% block content %}
+<h1>Solicitar Factura</h1>
+<h2>Completa los datos para generar tu factura</h2>
+
+<div class="info-box">
+    <strong>Pedido:</strong> {{ order.order_id }}<br>
+    <strong>Comprador:</strong> {{ order.buyer_nickname }}<br>
+    <strong>Monto:</strong> ${{ "%.2f"|format(order.paid_amount) }} {{ order.currency_id }}
+</div>
+
+<form method="POST" action="{{ url_for('procesar_factura') }}" enctype="multipart/form-data" id="facturaForm">
+    <!-- Constancia de Situación Fiscal -->
+    <div class="form-group">
+        <label for="csf_file">
+            Constancia de Situación Fiscal (CSF) <span class="required">*</span>
+        </label>
+        <input
+            type="file"
+            id="csf_file"
+            name="csf_file"
+            accept=".pdf,application/pdf"
+            required
+        >
+        <div class="hint">
+            Archivo PDF de tu Constancia de Situación Fiscal del SAT (máx. 16MB)
+        </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+        <label for="email">
+            Correo Electrónico <span class="required">*</span>
+        </label>
+        <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="ejemplo@correo.com"
+            required
+        >
+        <div class="hint">
+            Tu factura será enviada a este correo
+        </div>
+    </div>
+
+    <!-- Teléfono -->
+    <div class="form-group">
+        <label for="phone">
+            Teléfono (10 dígitos)
+        </label>
+        <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="5512345678"
+            pattern="[0-9]{10}"
+            maxlength="10"
+        >
+        <div class="hint">
+            Opcional - Solo números, sin espacios ni guiones
+        </div>
+    </div>
+
+    <!-- Uso del CFDI -->
+    <div class="form-group">
+        <label for="cfdi_usage">
+            Uso del CFDI <span class="required">*</span>
+        </label>
+        <select id="cfdi_usage" name="cfdi_usage" required>
+            <option value="">-- Selecciona una opción --</option>
+            {% for code, description in cfdi_options %}
+            <option value="{{ code }}">{{ code }} - {{ description }}</option>
+            {% endfor %}
+        </select>
+        <div class="hint">
+            Selecciona el uso que le darás a la factura según el SAT
+        </div>
+    </div>
+
+    <!-- Forma de Pago -->
+    <div class="form-group">
+        <label for="payment_method">
+            Forma de Pago <span class="required">*</span>
+        </label>
+        <select id="payment_method" name="payment_method" required>
+            <option value="">-- Selecciona una opción --</option>
+            {% for code, description in payment_methods %}
+            <option value="{{ code }}">{{ code }} - {{ description }}</option>
+            {% endfor %}
+        </select>
+        <div class="hint">
+            Método de pago utilizado en Mercado Libre
+        </div>
+    </div>
+
+    <!-- Monto Pagado -->
+    <div class="form-group">
+        <label for="monto_pagado">
+            Monto Pagado por el Producto <span class="required">*</span>
+        </label>
+        <input
+            type="number"
+            id="monto_pagado"
+            name="monto_pagado"
+            step="0.01"
+            min="0"
+            value="{{ "%.2f"|format(order.paid_amount) }}"
+            required
+        >
+        <div class="hint">
+            Verifica que el monto sea correcto: ${{ "%.2f"|format(order.paid_amount) }} {{ order.currency_id }}
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <button type="submit" class="btn" id="submitBtn">
+        Solicitar Factura
+    </button>
+
+    <a href="{{ url_for('index') }}" class="btn btn-secondary" style="display: inline-block; text-align: center; text-decoration: none;">
+        Cancelar
+    </a>
+</form>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Validación adicional del formulario
+    document.getElementById('facturaForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const fileInput = document.getElementById('csf_file');
+        const montoInput = document.getElementById('monto_pagado');
+        const expectedAmount = {{ order.paid_amount }};
+
+        // Validar archivo PDF
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const fileSize = file.size / 1024 / 1024; // MB
+
+            if (fileSize > 16) {
+                e.preventDefault();
+                alert('El archivo PDF no debe superar los 16MB');
+                return false;
+            }
+
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                e.preventDefault();
+                alert('Solo se permiten archivos PDF');
+                return false;
+            }
+        }
+
+        // Validar monto
+        const montoIngresado = parseFloat(montoInput.value);
+        if (Math.abs(montoIngresado - expectedAmount) > 0.01) {
+            const confirmar = confirm(
+                `El monto ingresado ($${montoIngresado}) difiere del monto del pedido ($${expectedAmount}). ¿Deseas continuar?`
+            );
+            if (!confirmar) {
+                e.preventDefault();
+                return false;
+            }
+        }
+
+        // Deshabilitar botón para evitar envíos duplicados
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Procesando...';
+    });
+
+    // Formatear teléfono (solo números)
+    document.getElementById('phone').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+    });
+</script>
+{% endblock %}

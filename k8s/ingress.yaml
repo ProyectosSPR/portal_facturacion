@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portal-facturacion
+  namespace: default
+  labels:
+    app: portal-facturacion
+  annotations:
+    # Ajusta según tu Ingress Controller (nginx, traefik, etc.)
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Para SSL con cert-manager
+spec:
+  ingressClassName: nginx  # Ajusta según tu cluster
+  rules:
+  - host: facturacion.tudominio.com  # Cambiar por tu dominio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: portal-facturacion
+            port:
+              number: 5000
+  # TLS (opcional, requiere cert-manager o secret con certificado)
+  # tls:
+  # - hosts:
+  #   - facturacion.tudominio.com
+  #   secretName: portal-facturacion-tls

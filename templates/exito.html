@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitud Enviada - Portal de Facturación{% endblock %}
+
+{% block content %}
+<div class="success-icon">✅</div>
+
+<h1 style="text-align: center;">¡Solicitud Enviada!</h1>
+<h2 style="text-align: center;">Tu solicitud de factura ha sido procesada correctamente</h2>
+
+<div class="info-box" style="margin-top: 30px;">
+    <strong>Pedido:</strong> {{ order_id }}<br><br>
+    <p>Tu factura está siendo procesada y será enviada a tu correo electrónico en los próximos minutos.</p>
+    <p>Si no recibes el correo, revisa tu carpeta de spam o contacta a soporte.</p>
+</div>
+
+<a href="{{ url_for('index') }}" class="btn" style="margin-top: 20px; display: inline-block; text-align: center; text-decoration: none;">
+    Facturar Otro Pedido
+</a>
+
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .success-icon {
+        animation: scaleIn 0.5s ease-out;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Variables de entorno (NUNCA SUBIR)
+.env
+.env.local
+.env.*.local
+
+# Uploads temporales
+uploads/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# Pruebas
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Sistema
+Thumbs.db

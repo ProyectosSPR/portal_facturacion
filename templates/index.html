@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Pedido - Portal de Facturación{% endblock %}
+
+{% block content %}
+<h1>Portal de Facturación</h1>
+<h2>Busca tu pedido de Mercado Libre para solicitar factura</h2>
+
+<form method="POST" action="{{ url_for('buscar_pedido_route') }}">
+    <div class="form-group">
+        <label for="search_id">
+            ID de Pedido o ID de Pago <span class="required">*</span>
+        </label>
+        <input
+            type="text"
+            id="search_id"
+            name="search_id"
+            placeholder="Ejemplo: 1234567890 o 98765432"
+            required
+            autofocus
+        >
+        <div class="hint">
+            Ingresa el número de tu pedido de Mercado Libre o el ID de tu pago
+        </div>
+    </div>
+
+    <button type="submit" class="btn">Buscar Pedido</button>
+</form>
+
+<div class="info-box" style="margin-top: 30px;">
+    <strong>¿Dónde encuentro mi ID de pedido?</strong>
+    <p>1. Ingresa a tu cuenta de Mercado Libre</p>
+    <p>2. Ve a "Mis compras"</p>
+    <p>3. Selecciona el pedido que deseas facturar</p>
+    <p>4. El ID aparece en los detalles de la compra</p>
+</div>
+{% endblock %}
