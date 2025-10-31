@@ -65,17 +65,23 @@ def buscar_pedido(search_id):
     conn = get_db_connection()
     if not conn:
         return None
-    
+
     cursor = None
     try:
         cursor = conn.cursor()
-        
-        # Primero intentar por order_id o pack_id
+
+        # Primero intentar por order_id o pack_id (con JOIN a shipment para obtener receiver_id)
         query = """
-            SELECT order_id, paid_amount, buyer_nickname, currency_id,
-                   receiver_id, shipment_id
-            FROM public.orden_ml
-            WHERE order_id = %s OR pack_id = %s
+            SELECT
+                o.order_id,
+                o.paid_amount,
+                o.buyer_nickname,
+                o.currency_id,
+                o.shipping_id,
+                s.receiver_id
+            FROM public.orden_ml o
+            LEFT JOIN public.shipment s ON o.shipping_id = s.id
+            WHERE o.order_id = %s OR o.pack_id = %s
         """
         cursor.execute(query, (search_id, search_id))  # ✅ Pasar search_id DOS veces
         row = cursor.fetchone()
@@ -83,10 +89,16 @@ def buscar_pedido(search_id):
         # Si no encuentra, intentar por payment_id
         if not row:
             query = """
-                SELECT order_id, paid_amount, buyer_nickname, currency_id,
-                       receiver_id, shipment_id
-                FROM public.orden_ml
-                WHERE payments_0_id = %s
+                SELECT
+                    o.order_id,
+                    o.paid_amount,
+                    o.buyer_nickname,
+                    o.currency_id,
+                    o.shipping_id,
+                    s.receiver_id
+                FROM public.orden_ml o
+                LEFT JOIN public.shipment s ON o.shipping_id = s.id
+                WHERE o.payments_0_id = %s
             """
             cursor.execute(query, (search_id,))
             row = cursor.fetchone()
@@ -97,11 +109,11 @@ def buscar_pedido(search_id):
                 'paid_amount': float(row[1]) if row[1] else 0,
                 'buyer_nickname': row[2],
                 'currency_id': row[3],
-                'receiver_id': row[4],
-                'shipment_id': row[5]
+                'shipping_id': row[4],  # ✅ Ahora es shipping_id desde orden_ml
+                'receiver_id': row[5]   # ✅ Ahora viene del JOIN con shipment
             }
         return None
-        
+
     except psycopg2.Error as e:
         app.logger.error(f"Error buscando pedido: {e}")
         return None
@@ -416,7 +428,7 @@ def procesar_factura():
 
         # Datos del comprador (para crear usuario en portal)
         'receiver_id': order.get('receiver_id'),
-        'shipment_id': order.get('shipment_id'),
+        'shipping_id': order.get('shipping_id'),  # ✅ Corregido: shipping_id no shipment_id
         'nombre': order.get('buyer_nickname', f"Cliente ML - {order['order_id']}"),
 
         # Datos de facturación

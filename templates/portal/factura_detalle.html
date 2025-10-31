@@ -18,6 +18,30 @@
             font-size: 1rem;
             padding: 8px 16px;
         }
+        .navbar {
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 100%) !important;
+        }
+        .bg-primary {
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 100%) !important;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(0, 196, 199, 1) 0%, rgba(0, 138, 140, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 196, 199, 0.3);
+        }
+        .btn-outline-primary {
+            border-color: rgba(0, 138, 140, 1);
+            color: rgba(0, 138, 140, 1);
+        }
+        .btn-outline-primary:hover {
+            background-color: rgba(0, 138, 140, 1);
+            border-color: rgba(0, 138, 140, 1);
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -188,7 +212,7 @@
                     <a href="{{ url_for('portal_dashboard') }}" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
                     </a>
-                    <small class="text-muted">Factura #{{'  factura.id }}</small>
+                    <small class="text-muted">Factura #{{ factura.id }}</small>
                 </div>
             </div>
         </div>

@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 50%, rgba(0, 138, 140, 1) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -18,25 +18,35 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 100%);
             border-radius: 15px 15px 0 0;
             padding: 30px;
             text-align: center;
         }
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 100%);
             border: none;
             padding: 12px;
             font-weight: 600;
         }
         .btn-login:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            background: linear-gradient(135deg, rgba(0, 196, 199, 1) 0%, rgba(0, 138, 140, 1) 100%);
             transform: translateY(-2px);
             transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 196, 199, 0.3);
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: rgba(0, 196, 199, 1);
+            box-shadow: 0 0 0 0.2rem rgba(0, 196, 199, 0.25);
+        }
+        .btn-outline-primary {
+            border-color: rgba(0, 138, 140, 1);
+            color: rgba(0, 138, 140, 1);
+        }
+        .btn-outline-primary:hover {
+            background-color: rgba(0, 138, 140, 1);
+            border-color: rgba(0, 138, 140, 1);
+            color: white;
         }
     </style>
 </head>

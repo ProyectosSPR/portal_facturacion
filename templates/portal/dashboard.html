@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         .sidebar {
-            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(180deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 50%, rgba(0, 138, 140, 1) 100%);
             min-height: 100vh;
             color: white;
         }
@@ -29,12 +29,36 @@
         .stat-card:hover {
             transform: translateY(-5px);
         }
+        .stat-card.border-primary {
+            border-left-color: rgba(0, 196, 199, 1) !important;
+        }
+        .text-primary {
+            color: rgba(0, 138, 140, 1) !important;
+        }
         .badge-status {
             font-size: 0.75rem;
             padding: 4px 8px;
         }
         .table-hover tbody tr:hover {
             background-color: #f8f9fa;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(0, 138, 140, 1) 0%, rgba(0, 196, 199, 1) 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(0, 196, 199, 1) 0%, rgba(0, 138, 140, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 196, 199, 0.3);
+        }
+        .btn-outline-primary {
+            border-color: rgba(0, 138, 140, 1);
+            color: rgba(0, 138, 140, 1);
+        }
+        .btn-outline-primary:hover {
+            background-color: rgba(0, 138, 140, 1);
+            border-color: rgba(0, 138, 140, 1);
+            color: white;
         }
     </style>
 </head>
