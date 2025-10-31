@@ -2,8 +2,56 @@
 
 {% block title %}Buscar Pedido - Portal de Facturación{% endblock %}
 
+{% block extra_styles %}
+<style>
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .btn-login {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    .btn-login i {
+        font-size: 16px;
+    }
+    .header-title {
+        flex: 1;
+    }
+</style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<h1>Portal de Facturación</h1>
+<div class="header-actions">
+    <div class="header-title">
+        <h1 style="margin-bottom: 5px;">Portal de Facturación</h1>
+    </div>
+    <a href="{{ url_for('portal_login') }}" class="btn-login">
+        <i class="fas fa-sign-in-alt"></i>
+        Iniciar Sesión
+    </a>
+</div>
+
 <h2>Busca tu pedido de Mercado Libre para solicitar factura</h2>
 
 <form method="POST" action="{{ url_for('buscar_pedido_route') }}">
@@ -33,5 +81,15 @@
     <p>2. Ve a "Mis compras"</p>
     <p>3. Selecciona el pedido que deseas facturar</p>
     <p>4. El ID aparece en los detalles de la compra</p>
+</div>
+
+<div class="info-box" style="margin-top: 15px; background: #e7f3ff; border-left-color: #28a745;">
+    <strong>💡 ¿Ya solicitaste una factura antes?</strong>
+    <p style="margin-top: 10px;">
+        <a href="{{ url_for('portal_login') }}" style="color: #28a745; font-weight: 600; text-decoration: none;">
+            → Inicia sesión aquí
+        </a>
+        para ver todas tus facturas, descargar PDFs y XMLs
+    </p>
 </div>
 {% endblock %}

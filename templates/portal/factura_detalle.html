@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Factura | DML Medica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .detail-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .detail-value {
+            color: #212529;
+        }
+        .badge-lg {
+            font-size: 1rem;
+            padding: 8px 16px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('portal_dashboard') }}">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+            </a>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'warning' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>Detalle de Factura
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Información General</h5>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Order ID ML:</span><br>
+                            <span class="detail-value badge bg-secondary">{{ factura.order_id }}</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Factura ID:</span><br>
+                            <span class="detail-value">
+                                {% if factura.invoice_name %}
+                                    <strong>{{ factura.invoice_name }}</strong>
+                                {% else %}
+                                    ID: {{ factura.invoice_id }}
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Monto:</span><br>
+                            <span class="detail-value fs-4">
+                                <strong>${{ "%.2f"|format(factura.amount) }}</strong> {{ factura.currency_id }}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Estado:</span><br>
+                            <span class="badge badge-lg bg-{{ 'success' if factura.status == 'sent' else 'warning' if factura.status == 'created' else 'danger' }}">
+                                {{ factura.status }}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Estado de Pago:</span><br>
+                            <span class="badge badge-lg bg-{{ 'success' if factura.payment_status == 'paid' else 'warning' if factura.payment_status == 'pending' else 'info' }}">
+                                {{ factura.payment_status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Información de Pago</h5>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Monto Pagado:</span><br>
+                            <span class="detail-value">
+                                {% if factura.paid_amount %}
+                                    ${{ "%.2f"|format(factura.paid_amount) }}
+                                {% else %}
+                                    <span class="text-muted">Pendiente</span>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Fecha de Pago:</span><br>
+                            <span class="detail-value">
+                                {% if factura.payment_date %}
+                                    {{ factura.payment_date.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    <span class="text-muted">Pendiente</span>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Fecha de Creación:</span><br>
+                            <span class="detail-value">{{ factura.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="detail-label">Última Actualización:</span><br>
+                            <span class="detail-value">{{ factura.updated_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Observaciones de Contabilidad -->
+                {% if factura.observaciones_contabilidad %}
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>Observaciones de Contabilidad
+                        </h6>
+                        <p class="mb-0">{{ factura.observaciones_contabilidad }}</p>
+                    </div>
+                {% endif %}
+
+                <!-- Notas del Cliente -->
+                {% if factura.notas_cliente %}
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-sticky-note me-2"></i>Notas
+                        </h6>
+                        <p class="mb-0">{{ factura.notas_cliente }}</p>
+                    </div>
+                {% endif %}
+
+                <hr class="my-4">
+
+                <!-- Descargas -->
+                <h5 class="mb-3">Descargas</h5>
+                <div class="d-flex gap-2">
+                    {% if factura.pdf_url %}
+                        <a href="{{ url_for('portal_descargar_pdf', factura_id=factura.id) }}" class="btn btn-danger">
+                            <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+                        </a>
+                    {% else %}
+                        <button class="btn btn-outline-danger" disabled>
+                            <i class="fas fa-file-pdf me-2"></i>PDF no disponible
+                        </button>
+                    {% endif %}
+
+                    {% if factura.xml_url %}
+                        <a href="{{ url_for('portal_descargar_xml', factura_id=factura.id) }}" class="btn btn-success">
+                            <i class="fas fa-file-code me-2"></i>Descargar XML
+                        </a>
+                    {% else %}
+                        <button class="btn btn-outline-success" disabled>
+                            <i class="fas fa-file-code me-2"></i>XML no disponible
+                        </button>
+                    {% endif %}
+                </div>
+
+                {% if not factura.pdf_url and not factura.xml_url %}
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-clock me-2"></i>
+                        Los archivos PDF y XML estarán disponibles en las próximas 24 horas.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('portal_dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                    </a>
+                    <small class="text-muted">Factura #{{'  factura.id }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
