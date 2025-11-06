@@ -1,0 +1,681 @@
+{% extends "base.html" %}
+
+{% block title %}Ayuda y Preguntas Frecuentes - {{ order.order_id }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .faq-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px 30px;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 40px);
+    }
+
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #f5f7fa;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+
+    .header-section {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .header-section h1 {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .header-section h3 {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+
+    .header-section p {
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .status-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .status-section h2 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    .faq-scrollable {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 15px;
+        scroll-behavior: smooth;
+    }
+
+    .faq-scrollable h2 {
+        font-size: 20px;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+
+    /* Estilos personalizados del scrollbar (Chrome, Safari, Edge) */
+    .faq-scrollable::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    .faq-scrollable::-webkit-scrollbar-track {
+        background: #e1e8ed;
+        border-radius: 10px;
+        margin: 5px 0;
+    }
+
+    .faq-scrollable::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        border-radius: 10px;
+        border: 2px solid #e1e8ed;
+    }
+
+    .faq-scrollable::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        border-color: #d1d8dd;
+    }
+
+    /* Scrollbar para Firefox */
+    .faq-scrollable {
+        scrollbar-width: thin;
+        scrollbar-color: #2a5298 #e1e8ed;
+    }
+
+    .status-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    .status-table th {
+        background: #f5f7fa;
+        padding: 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        border-bottom: 2px solid #e1e8ed;
+    }
+
+    .status-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e1e8ed;
+        vertical-align: top;
+    }
+
+    .status-table td strong {
+        font-size: 13px;
+    }
+
+    .status-table td small {
+        font-size: 12px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-approved { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .status-delivered { background: #d4edda; color: #155724; }
+    .status-shipped { background: #cfe2ff; color: #084298; }
+    .status-ready { background: #e7f3ff; color: #004085; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    .status-released { background: #d4edda; color: #155724; }
+    .status-not-released { background: #fff3cd; color: #856404; }
+
+    .faq-item {
+        background: white;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-left: 4px solid #2a5298;
+    }
+
+    .faq-question {
+        font-size: 17px;
+        font-weight: 600;
+        color: #1e3c72;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .faq-answer {
+        color: #555;
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+    .faq-answer p {
+        margin: 8px 0;
+    }
+
+    .faq-answer ul,
+    .faq-answer ol {
+        margin: 10px 0;
+    }
+
+    .faq-answer ul {
+        margin: 10px 0;
+        padding-left: 25px;
+    }
+
+    .faq-answer li {
+        margin: 8px 0;
+    }
+
+    .alert-info {
+        background: #e7f3ff;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 5px;
+        margin: 12px 0;
+        font-size: 14px;
+    }
+
+    .alert-warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 12px;
+        border-radius: 5px;
+        margin: 12px 0;
+        font-size: 14px;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 12px;
+        border-radius: 5px;
+        margin: 12px 0;
+        font-size: 14px;
+    }
+
+    .alert-info strong,
+    .alert-warning strong,
+    .alert-danger strong {
+        font-size: 14px;
+    }
+
+    .alert-info ul,
+    .alert-warning ul,
+    .alert-danger ul,
+    .alert-info ol,
+    .alert-warning ol,
+    .alert-danger ol {
+        margin: 8px 0;
+        padding-left: 20px;
+    }
+
+    .btn-back {
+        display: inline-block;
+        padding: 10px 25px;
+        background: #2a5298;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 20px;
+        transition: background 0.3s;
+    }
+
+    .btn-back:hover {
+        background: #1e3c72;
+        color: white;
+    }
+
+    .no-data {
+        color: #999;
+        font-style: italic;
+    }
+
+    /* Indicador de scroll */
+    .scroll-indicator {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #2a5298;
+        font-size: 12px;
+        font-weight: 600;
+        animation: bounce 2s infinite;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateX(-50%) translateY(0);
+        }
+        40% {
+            transform: translateX(-50%) translateY(-10px);
+        }
+        60% {
+            transform: translateX(-50%) translateY(-5px);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .faq-container {
+            padding: 15px;
+            max-height: calc(100vh - 30px);
+        }
+
+        .header-section {
+            padding: 20px;
+        }
+
+        .status-section {
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .faq-scrollable {
+            padding-right: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="faq-container">
+    <!-- Sección fija (Header + Tabla de estados) -->
+    <div class="sticky-header">
+        <!-- Header -->
+        <div class="header-section">
+            <h1>❓ Centro de Ayuda</h1>
+            <h3>Pedido: {{ order.pack_id or order.order_id }}</h3>
+            <p>Encuentra respuestas a las preguntas más frecuentes</p>
+        </div>
+
+        <!-- Estado del Pedido -->
+        <div class="status-section">
+        <h2>📊 Estado de tu Pedido</h2>
+
+        <table class="status-table">
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th>Estado</th>
+                    <th>Detalles</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Estado de Pago del Cliente -->
+                <tr>
+                    <td><strong>💳 Pago del Cliente</strong></td>
+                    <td>
+                        {% if payment_status %}
+                            {% if payment_status.status == 'approved' %}
+                                <span class="status-badge status-approved">✓ Aprobado</span>
+                            {% elif payment_status.status == 'pending' %}
+                                <span class="status-badge status-pending">⏳ Pendiente</span>
+                            {% elif payment_status.status in ['rejected', 'cancelled'] %}
+                                <span class="status-badge status-rejected">✗ Rechazado</span>
+                            {% else %}
+                                <span class="status-badge">{{ payment_status.status }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="no-data">No disponible</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if payment_status %}
+                            <strong>Monto:</strong> ${{ payment_status.transaction_amount }} {{ payment_status.currency_id }}<br>
+                            <strong>Método:</strong> {{ payment_status.payment_method_id }}<br>
+                            {% if payment_status.status_detail %}
+                                <strong>Detalle:</strong> {{ payment_status.status_detail }}<br>
+                            {% endif %}
+                            {% if payment_status.date_approved %}
+                                <strong>Aprobado:</strong> {{ payment_status.date_approved.strftime('%d/%m/%Y %H:%M') }}
+                            {% endif %}
+                        {% else %}
+                            <span class="no-data">Sin información de pago</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Estado de Liberación de Mercado Libre -->
+                <tr style="background: #f8f9fa;">
+                    <td><strong>💰 Liberación ML</strong></td>
+                    <td>
+                        {% if payment_status %}
+                            {% if payment_status.odoo_reccord %}
+                                <span class="status-badge status-released">✓ Liberado</span>
+                            {% elif payment_status.money_release_status == 'released' %}
+                                <span class="status-badge status-released">✓ Liberado por ML</span>
+                            {% elif payment_status.money_release_status == 'pending' %}
+                                <span class="status-badge status-pending">⏳ Pendiente de liberar</span>
+                            {% else %}
+                                <span class="status-badge status-not-released">⏳ No Liberado</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="no-data">No disponible</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if payment_status %}
+                            <!-- Registrado en Odoo (mejor indicador) -->
+                            {% if payment_status.odoo_reccord %}
+                                <strong>✓ Registrado en Odoo:</strong> Sí<br>
+                                <strong>Estado ML:</strong> {{ payment_status.money_release_status or 'N/A' }}<br>
+                                {% if payment_status.money_release_date %}
+                                    <strong>Fecha liberación:</strong> {{ payment_status.money_release_date.strftime('%d/%m/%Y %H:%M') }}<br>
+                                {% endif %}
+                                <span style="color: #28a745; font-weight: bold;">✓ Puedes solicitar factura</span>
+
+                            <!-- No registrado en Odoo pero ML dice released -->
+                            {% elif payment_status.money_release_status == 'released' %}
+                                <strong>✓ Liberado por ML:</strong> Sí<br>
+                                <strong>⚠️ Registrado en Odoo:</strong> No (procesando...)<br>
+                                {% if payment_status.money_release_date %}
+                                    <strong>Fecha liberación:</strong> {{ payment_status.money_release_date.strftime('%d/%m/%Y %H:%M') }}<br>
+                                {% endif %}
+                                <span style="color: #856404;">⏳ Espera unos minutos e intenta de nuevo</span>
+
+                            <!-- Pendiente de liberar -->
+                            {% elif payment_status.money_release_status == 'pending' %}
+                                <strong>Estado ML:</strong> Pendiente de liberar<br>
+                                <strong>Registrado en Odoo:</strong> No<br>
+                                <span style="color: #856404; font-weight: bold;">⚠️ No se puede facturar aún</span><br>
+                                <small style="color: #666;">
+                                    💡 Confirma la recepción de tu producto en Mercado Libre para acelerar la liberación
+                                </small>
+
+                            <!-- Sin liberar -->
+                            {% else %}
+                                <strong>Estado ML:</strong> {{ payment_status.money_release_status or 'No liberado' }}<br>
+                                <strong>Registrado en Odoo:</strong> No<br>
+                                <span style="color: #856404; font-weight: bold;">⚠️ No se puede facturar aún</span><br>
+                                <small style="color: #666;">
+                                    💡 Confirma la recepción de tu producto en Mercado Libre
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            <span class="no-data">Sin información</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Estado de Envío -->
+                <tr>
+                    <td><strong>📦 Envío</strong></td>
+                    <td>
+                        {% if shipment_status %}
+                            {% if shipment_status.status == 'delivered' %}
+                                <span class="status-badge status-delivered">✓ Entregado</span>
+                            {% elif shipment_status.status == 'shipped' %}
+                                <span class="status-badge status-shipped">🚚 En camino</span>
+                            {% elif shipment_status.status == 'ready_to_ship' %}
+                                <span class="status-badge status-ready">📋 Listo para enviar</span>
+                            {% elif shipment_status.status == 'cancelled' %}
+                                <span class="status-badge status-cancelled">✗ Cancelado</span>
+                            {% elif shipment_status.status == 'pending' %}
+                                <span class="status-badge status-pending">⏳ Pendiente</span>
+                            {% else %}
+                                <span class="status-badge">{{ shipment_status.status }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="no-data">No disponible</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if shipment_status %}
+                            {% if shipment_status.tracking_number %}
+                                <strong>Rastreo:</strong> {{ shipment_status.tracking_number }}<br>
+                            {% endif %}
+                            {% if shipment_status.receiver_address_receiver_name %}
+                                <strong>Destinatario:</strong> {{ shipment_status.receiver_address_receiver_name }}<br>
+                            {% endif %}
+                            {% if shipment_status.receiver_address_city_name %}
+                                <strong>Destino:</strong> {{ shipment_status.receiver_address_city_name }}, {{ shipment_status.receiver_address_state_name }}<br>
+                            {% endif %}
+                            {% if shipment_status.substatus %}
+                                <strong>Subestado:</strong> {{ shipment_status.substatus }}
+                            {% endif %}
+                        {% else %}
+                            <span class="no-data">Sin información de envío</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div><!-- Fin sticky-header -->
+
+    <!-- Sección scrollable de Preguntas Frecuentes -->
+    <div class="faq-scrollable">
+        <h2>🤔 Preguntas Frecuentes</h2>
+
+    <!-- FAQ 1: Diferencia entre pago aprobado y liberado -->
+    <div class="faq-item">
+        <div class="faq-question">
+            💰 ¿Por qué mi pago está "Aprobado" pero no puedo facturar?
+        </div>
+        <div class="faq-answer">
+            <p><strong>Es muy importante entender la diferencia entre estos dos conceptos:</strong></p>
+
+            <div class="alert-warning">
+                <strong>🔴 Pago Aprobado (Cliente):</strong>
+                <ul>
+                    <li>✓ Mercado Libre ya cobró el dinero al cliente</li>
+                    <li>✓ El cliente ya pagó su compra</li>
+                    <li>❌ PERO nosotros aún NO recibimos el dinero</li>
+                </ul>
+            </div>
+
+            <div class="alert-info">
+                <strong>🟢 Pago Liberado (Vendedor):</strong>
+                <ul>
+                    <li>✓ Mercado Libre YA nos liberó el dinero</li>
+                    <li>✓ El pago está registrado en nuestro sistema contable (Odoo)</li>
+                    <li>✓ AHORA SÍ podemos emitir la factura legalmente</li>
+                </ul>
+            </div>
+
+            <p><strong>⚖️ ¿Por qué esta diferencia?</strong></p>
+            <p>Por razones legales y contables, <strong>solo podemos facturar cuando YA recibimos el dinero</strong>.
+            Mercado Libre retiene el pago hasta que confirmes que recibiste tu producto.</p>
+
+            <div class="alert-info">
+                <strong>✓ ¿Cómo acelerar la liberación del pago?</strong>
+                <ol>
+                    <li><strong>Recibe tu producto</strong></li>
+                    <li><strong>Entra a Mercado Libre</strong> → Mis Compras</li>
+                    <li><strong>Busca tu pedido</strong> y haz clic en "Confirmar recepción"</li>
+                    <li><strong>Espera 30 min - 1 hora</strong> para que ML libere el pago</li>
+                    <li><strong>¡Ahora sí puedes solicitar tu factura!</strong></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ 2: Pago no procesado -->
+    <div class="faq-item">
+        <div class="faq-question">
+            💳 ¿Qué pasa si mi pago del cliente aún no está aprobado?
+        </div>
+        <div class="faq-answer">
+            <p>Si el pago del cliente aún no está aprobado, pueden existir estos escenarios:</p>
+            <ul>
+                <li><strong>Pago pendiente:</strong> El pago está en proceso de verificación</li>
+                <li><strong>Pago rechazado:</strong> Hubo un problema con el método de pago</li>
+                <li><strong>Pago en mediación:</strong> Existe una disputa o reclamo activo</li>
+            </ul>
+
+            <div class="alert-info">
+                <strong>✓ Solución:</strong>
+                <ol>
+                    <li>Verifica el estado de "Pago del Cliente" en la tabla de arriba</li>
+                    <li>Si está "Pendiente", espera a que Mercado Libre lo apruebe (24-48h)</li>
+                    <li>Si está "Rechazado", contacta a Mercado Libre</li>
+                    <li>Una vez aprobado Y liberado, podrás solicitar tu factura</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ 3: Envío pendiente -->
+    <div class="faq-item">
+        <div class="faq-question">
+            📦 ¿Por qué fue rechazada mi solicitud por envío pendiente?
+        </div>
+        <div class="faq-answer">
+            <p>La factura solo puede generarse cuando el envío está confirmado. Esto asegura que la información fiscal sea correcta.</p>
+
+            <div class="alert-warning">
+                <strong>Estados de envío que impiden la facturación:</strong>
+                <ul>
+                    <li><strong>Pendiente:</strong> El envío aún no ha sido procesado por el vendedor</li>
+                    <li><strong>Cancelado:</strong> El envío fue cancelado</li>
+                    <li><strong>Sin información:</strong> No existe registro de envío en el sistema</li>
+                </ul>
+            </div>
+
+            <div class="alert-info">
+                <strong>✓ Solución:</strong>
+                <ol>
+                    <li>Verifica el estado de tu envío en la tabla de arriba</li>
+                    <li>Espera a que el vendedor prepare y envíe el paquete</li>
+                    <li>Una vez que el estado sea "Listo para enviar" o "En camino", podrás solicitar tu factura</li>
+                    <li>Si el envío está cancelado, contacta al vendedor</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ 4: Información incompleta -->
+    <div class="faq-item">
+        <div class="faq-question">
+            📄 ¿Por qué necesitan mi Constancia de Situación Fiscal (CSF)?
+        </div>
+        <div class="faq-answer">
+            <p>La Constancia de Situación Fiscal es un documento oficial del SAT que contiene:</p>
+            <ul>
+                <li>Tu RFC (Registro Federal de Contribuyentes)</li>
+                <li>Tu nombre o razón social completa</li>
+                <li>Tu domicilio fiscal</li>
+                <li>Tu régimen fiscal</li>
+            </ul>
+
+            <div class="alert-info">
+                <strong>📥 ¿Cómo obtener tu CSF?</strong>
+                <ol>
+                    <li>Ingresa a <a href="https://www.sat.gob.mx" target="_blank">www.sat.gob.mx</a></li>
+                    <li>Inicia sesión con tu RFC y contraseña (o e.firma)</li>
+                    <li>Ve a "Servicios por Internet" → "Constancia de Situación Fiscal"</li>
+                    <li>Descarga el PDF de tu constancia actualizada</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ 5: Datos incorrectos -->
+    <div class="faq-item">
+        <div class="faq-question">
+            ⚠️ ¿Qué hago si los datos de mi pedido no coinciden?
+        </div>
+        <div class="faq-answer">
+            <p>Si detectas que algún dato está incorrecto:</p>
+
+            <div class="alert-danger">
+                <strong>Datos críticos que deben coincidir:</strong>
+                <ul>
+                    <li><strong>Monto pagado:</strong> Debe ser exactamente el monto de tu compra en Mercado Libre</li>
+                    <li><strong>Email:</strong> Debe ser válido para recibir tu factura</li>
+                    <li><strong>RFC en CSF:</strong> Debe estar vigente y activo</li>
+                </ul>
+            </div>
+
+            <div class="alert-info">
+                <strong>✓ Solución:</strong>
+                <ul>
+                    <li>Verifica tus datos antes de enviar la solicitud</li>
+                    <li>Si ya enviaste la solicitud con datos incorrectos, espera el rechazo e intenta nuevamente</li>
+                    <li>Asegúrate de que tu CSF esté actualizada (no mayor a 1 mes)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ 6: Tiempo de procesamiento -->
+    <div class="faq-item">
+        <div class="faq-question">
+            ⏱️ ¿Cuánto tiempo tarda en generarse mi factura?
+        </div>
+        <div class="faq-answer">
+            <p>El proceso de facturación tiene varios pasos:</p>
+            <ol>
+                <li><strong>Validación (1-2 min):</strong> Verificamos que el pago y envío estén correctos</li>
+                <li><strong>Extracción de RFC (1-2 min):</strong> Procesamos tu CSF con IA</li>
+                <li><strong>Creación en Odoo (2-3 min):</strong> Generamos la factura en el sistema</li>
+                <li><strong>Timbrado SAT (1-2 min):</strong> El SAT certifica la factura</li>
+                <li><strong>Envío por email (instantáneo):</strong> Recibes tu factura</li>
+            </ol>
+
+            <div class="alert-info">
+                <strong>⏱️ Tiempo total estimado: 5-10 minutos</strong><br>
+                Puedes ver el progreso en tiempo real en la página de procesamiento.
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ 7: Acceso al portal -->
+    <div class="faq-item">
+        <div class="faq-question">
+            🔐 ¿Cómo accedo a mi portal de facturas?
+        </div>
+        <div class="faq-answer">
+            <p>Una vez creada tu factura, puedes acceder al portal de clientes:</p>
+
+            <div class="alert-info">
+                <strong>Credenciales de acceso:</strong>
+                <ul>
+                    <li><strong>Usuario:</strong> Tu correo electrónico</li>
+                    <li><strong>Contraseña:</strong> Tu número de cliente de Mercado Libre (receiver_id)</li>
+                </ul>
+                <p style="margin-top: 15px;">
+                    <a href="{{ url_for('portal_login') }}" class="btn-back" style="background: #2ecc71;">
+                        🔗 Ir al Portal de Clientes
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+        <!-- Botón para volver -->
+        <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+            <a href="{{ url_for('index') }}" class="btn-back">
+                ← Volver al Inicio
+            </a>
+        </div>
+    </div><!-- Fin faq-scrollable -->
+</div><!-- Fin faq-container -->
+{% endblock %}

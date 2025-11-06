@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS facturas (
     status VARCHAR(50) DEFAULT 'created',  -- created, sent, paid, cancelled, error
 
     -- Información de pago
-    payment_status VARCHAR(50) DEFAULT 'pending',  -- pending, partial, paid, overdue
+    payment_status VARCHAR(50) DEFAULT 'pendiente',  -- pendiente, parcial, pagado, vencido
     paid_amount DECIMAL(10, 2) DEFAULT 0,
     payment_date DATE,
 
@@ -260,8 +260,8 @@ SELECT
     DATE_TRUNC('month', created_at) as mes,
     COUNT(*) as total_facturas,
     SUM(amount) as monto_total,
-    COUNT(CASE WHEN payment_status = 'paid' THEN 1 END) as facturas_pagadas,
-    SUM(CASE WHEN payment_status = 'paid' THEN paid_amount ELSE 0 END) as monto_pagado,
+    COUNT(CASE WHEN payment_status = 'pagado' THEN 1 END) as facturas_pagadas,
+    SUM(CASE WHEN payment_status = 'pagado' THEN paid_amount ELSE 0 END) as monto_pagado,
     COUNT(CASE WHEN status = 'error' THEN 1 END) as facturas_error
 FROM facturas
 GROUP BY DATE_TRUNC('month', created_at)

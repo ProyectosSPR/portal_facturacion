@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Procesando Factura - {{ order_id }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .processing-container {
+        max-width: 900px;
+        margin: 50px auto;
+        text-align: center;
+        padding: 40px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .loader {
+        margin: 30px auto;
+        width: 80px;
+        height: 80px;
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        background-color: #e0e0e0;
+        border-radius: 10px;
+        height: 30px;
+        margin: 20px 0;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        width: 0%;
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+
+    .status-message {
+        font-size: 18px;
+        color: #555;
+        margin: 20px 0;
+        min-height: 30px;
+    }
+
+    .status-completed {
+        color: #2ecc71;
+        font-weight: bold;
+    }
+
+    .status-error {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+
+    .status-details {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .btn-redirect {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 30px;
+        background: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+
+    .btn-redirect:hover {
+        background: #2980b9;
+    }
+
+    .btn-success {
+        background: #2ecc71;
+    }
+
+    .btn-success:hover {
+        background: #27ae60;
+    }
+
+    .btn-warning {
+        background: #f39c12;
+    }
+
+    .btn-warning:hover {
+        background: #e67e22;
+    }
+
+    .btn-danger {
+        background: #e74c3c;
+    }
+
+    .btn-danger:hover {
+        background: #c0392b;
+    }
+
+    #actionButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    #actionButtons a {
+        margin: 0 !important;
+    }
+
+    .spinner-dots {
+        display: inline-block;
+    }
+
+    .spinner-dots::after {
+        content: '';
+        animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+        0%, 20% { content: ''; }
+        40% { content: '.'; }
+        60% { content: '..'; }
+        80%, 100% { content: '...'; }
+    }
+
+    .info-box {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .info-box h4 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ffffff;
+    }
+
+    .info-box p {
+        margin: 8px 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #f0f4f8;
+    }
+
+    .info-box strong {
+        background: rgba(255,255,255,0.25);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        color: #ffffff;
+    }
+
+    .info-box a {
+        color: #a8d5ff !important;
+        text-decoration: underline;
+        font-weight: bold;
+        transition: color 0.3s;
+    }
+
+    .info-box a:hover {
+        color: #d4ebff !important;
+    }
+
+    .credential-box {
+        background: rgba(255,255,255,0.12);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        border-left: 4px solid #64b5f6;
+    }
+
+    .credential-box p {
+        color: #ffffff !important;
+    }
+
+    .credential-item {
+        display: flex;
+        justify-content: space-between;
+        margin: 8px 0;
+        font-size: 15px;
+    }
+
+    .credential-label {
+        color: #e3f2fd;
+        font-weight: 500;
+    }
+
+    .credential-value {
+        font-weight: bold;
+        font-family: monospace;
+        background: rgba(255,255,255,0.25);
+        padding: 4px 10px;
+        border-radius: 4px;
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="processing-container">
+    <h1>Procesando tu Solicitud</h1>
+    <h3>Pedido: <strong>{{ order_id }}</strong></h3>
+
+    <div class="loader" id="loader"></div>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar">
+            <span id="progressText">0%</span>
+        </div>
+    </div>
+
+    <div class="status-message" id="statusMessage">
+        Iniciando proceso<span class="spinner-dots"></span>
+    </div>
+
+    <div class="status-details" id="statusDetails" style="display: none;">
+        <!-- Detalles adicionales se mostrarán aquí -->
+    </div>
+
+    <div id="actionButtons" style="display: none;">
+        <!-- Botones aparecerán cuando termine -->
+    </div>
+
+    <!-- Información de acceso al portal -->
+    <div class="info-box">
+        <h4>
+            <span style="font-size: 24px;">🔐</span>
+            Acceso a tu Portal de Facturas
+        </h4>
+        <p>
+            Recibirás tu factura por correo electrónico. Además, puedes consultar
+            el estatus y descargar tus facturas en cualquier momento desde nuestro portal.
+        </p>
+
+        <div class="credential-box">
+            <p style="margin-top: 0; margin-bottom: 12px; font-weight: bold;">
+                📝 Credenciales de acceso:
+            </p>
+            <div class="credential-item">
+                <span class="credential-label">Usuario:</span>
+                <span class="credential-value">Tu correo electrónico</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Contraseña:</span>
+                <span class="credential-value">{{ receiver_id }}</span>
+            </div>
+            <p style="margin-top: 15px; margin-bottom: 0; font-size: 13px; opacity: 0.9;">
+                💡 <strong>Tip:</strong> Tu contraseña es tu número de cliente de Mercado Libre (receiver_id).
+                Guarda estos datos para acceder posteriormente.
+            </p>
+        </div>
+
+        <p style="margin-top: 15px; margin-bottom: 0;">
+            <a href="{{ url_for('portal_login') }}">
+                🔗 Ir al Portal de Clientes
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const ORDER_ID = "{{ order_id }}";
+    const CHECK_INTERVAL = 2000; // Revisar cada 2 segundos
+    let intervalId = null;
+    let lastStatus = null;
+
+    // Mapeo de estados a emojis (opcional)
+    const statusEmojis = {
+        'iniciado': '🚀',
+        'validando': '🔍',
+        'buscando_cliente': '👤',
+        'creando_cliente': '✨',
+        'procesando_csf': '📄',
+        'extrayendo_rfc': '🔑',
+        'creando_factura': '📝',
+        'timbrando': '✅',
+        'enviando_email': '📧',
+        'completado': '🎉',
+        'error': '❌'
+    };
+
+    function checkStatus() {
+        fetch(`/api/status/${ORDER_ID}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateUI(data);
+                    lastStatus = data.estado;
+
+                    // Si completó o hubo error, detener polling
+                    if (data.estado === 'completado' || data.estado === 'error') {
+                        stopPolling();
+                        showFinalButtons(data.estado);
+                    }
+                } else {
+                    console.error('Error al obtener estado:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error en la petición:', error);
+            });
+    }
+
+    function updateUI(data) {
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusDetails = document.getElementById('statusDetails');
+        const loader = document.getElementById('loader');
+
+        // Actualizar barra de progreso
+        const progreso = data.progreso || 0;
+        progressBar.style.width = progreso + '%';
+        progressText.textContent = progreso + '%';
+
+        // Actualizar mensaje
+        const emoji = statusEmojis[data.estado] || '⏳';
+        statusMessage.innerHTML = `${emoji} ${data.mensaje || 'Procesando...'}`;
+
+        // Cambiar clase según estado
+        statusMessage.className = 'status-message';
+        if (data.estado === 'completado') {
+            statusMessage.classList.add('status-completed');
+            loader.style.display = 'none';
+        } else if (data.estado === 'error') {
+            statusMessage.classList.add('status-error');
+            loader.style.display = 'none';
+        }
+
+        // Mostrar detalles si hay
+        if (data.detalles && Object.keys(data.detalles).length > 0) {
+            statusDetails.style.display = 'block';
+            statusDetails.innerHTML = '<strong>Detalles:</strong><br>' +
+                JSON.stringify(data.detalles, null, 2).replace(/[{}"]/g, '').replace(/,/g, '<br>');
+        }
+    }
+
+    function showFinalButtons(estado) {
+        const actionButtons = document.getElementById('actionButtons');
+        actionButtons.style.display = 'block';
+
+        if (estado === 'completado') {
+            actionButtons.innerHTML = `
+                <a href="{{ url_for('exito', order_id=order_id) }}" class="btn-redirect btn-success">
+                    Ver Detalles de la Factura
+                </a>
+            `;
+        } else {
+            actionButtons.innerHTML = `
+                <a href="{{ url_for('faq', order_id=order_id) }}" class="btn-redirect" style="background: #f39c12;">
+                    ❓ ¿Por qué falló?
+                </a>
+                <a href="{{ url_for('facturar', order_id=order_id) }}" class="btn-redirect" style="background: #e74c3c;">
+                    🔄 Reintentar
+                </a>
+                <a href="{{ url_for('index') }}" class="btn-redirect" style="background: #95a5a6;">
+                    ← Volver al Inicio
+                </a>
+            `;
+        }
+    }
+
+    function stopPolling() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+            console.log('Polling detenido');
+        }
+    }
+
+    // Iniciar polling cuando carga la página
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log('Iniciando monitoreo de estado para order_id:', ORDER_ID);
+
+        // Primera consulta inmediata
+        checkStatus();
+
+        // Luego cada 2 segundos
+        intervalId = setInterval(checkStatus, CHECK_INTERVAL);
+    });
+
+    // Detener polling al salir de la página
+    window.addEventListener('beforeunload', function() {
+        stopPolling();
+    });
+</script>
+{% endblock %}

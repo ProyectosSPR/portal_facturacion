@@ -7,7 +7,8 @@
 <h2>Completa los datos para generar tu factura</h2>
 
 <div class="info-box">
-    <strong>Pedido:</strong> {{ order.order_id }}<br>
+    <strong>Pedido:</strong> {{ order.pack_id or order.order_id }}<br>
+    <strong>receiver id:</strong> {{ order.receiver_id }}<br>
     <strong>Comprador:</strong> {{ order.buyer_nickname }}<br>
     <strong>Monto:</strong> ${{ "%.2f"|format(order.paid_amount) }} {{ order.currency_id }}
 </div>

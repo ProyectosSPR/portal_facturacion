@@ -17,14 +17,14 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
     # PostgreSQL - Base de datos de Mercado Libre
-    POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST', '192.168.85.208')
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
-    POSTGRES_DB = os.getenv('POSTGRES_DB', 'nombre_db')
+    POSTGRES_DB = os.getenv('POSTGRES_DB', 'mercadoLibre')
     POSTGRES_USER = os.getenv('POSTGRES_USER', 'dml')
-    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'password_placeholder')
+    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'Sergio55')
 
     # n8n - Orquestador de Workflows
-    N8N_WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', 'https://your-n8n-instance.com/webhook/facturacion')
+    N8N_WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', 'https://aut.automateai.com.mx/webhook-test/a86064e4-d5ef-4abe-85cd-be0362757f88')
 
     # Portal de Usuarios - URL pública
     PORTAL_URL = os.getenv('PORTAL_URL', 'http://localhost:5000/portal/login')

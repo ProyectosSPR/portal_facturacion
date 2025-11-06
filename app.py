@@ -74,6 +74,7 @@ def buscar_pedido(search_id):
         query = """
             SELECT
                 o.order_id,
+                o.pack_id,
                 o.paid_amount,
                 o.buyer_nickname,
                 o.currency_id,
@@ -91,6 +92,7 @@ def buscar_pedido(search_id):
             query = """
                 SELECT
                     o.order_id,
+                    o.pack_id,
                     o.paid_amount,
                     o.buyer_nickname,
                     o.currency_id,
@@ -106,11 +108,12 @@ def buscar_pedido(search_id):
         if row:
             return {
                 'order_id': row[0],
-                'paid_amount': float(row[1]) if row[1] else 0,
-                'buyer_nickname': row[2],
-                'currency_id': row[3],
-                'shipping_id': row[4],  # ✅ Ahora es shipping_id desde orden_ml
-                'receiver_id': row[5]   # ✅ Ahora viene del JOIN con shipment
+                'pack_id': row[1],  # ✅ pack_id de la columna 1
+                'paid_amount': float(row[2]) if row[2] else 0,
+                'buyer_nickname': row[3],
+                'currency_id': row[4],
+                'shipping_id': row[5],  # ✅ Ahora es shipping_id desde orden_ml
+                'receiver_id': row[6]   # ✅ Ahora viene del JOIN con shipment
             }
         return None
 
@@ -423,6 +426,7 @@ def procesar_factura():
     payload = {
         # Datos del pedido
         'order_id': order['order_id'],
+        'pack_id': order.get('pack_id'),
         'paid_amount': order['paid_amount'],
         'currency_id': order.get('currency_id', 'MXN'),
 
@@ -457,6 +461,46 @@ def procesar_factura():
     os.remove(file_path)
 
     # ========================================================================
+    # CREAR REGISTRO DE STATUS EN BD (para tracking en tiempo real)
+    # ========================================================================
+    logger.info("💾 Creando registro de status inicial...")
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            query = """
+                INSERT INTO solicitudes_status (order_id, estado, mensaje, progreso, detalles)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (order_id) DO UPDATE SET
+                    estado = EXCLUDED.estado,
+                    mensaje = EXCLUDED.mensaje,
+                    progreso = EXCLUDED.progreso,
+                    detalles = EXCLUDED.detalles,
+                    updated_at = NOW()
+            """
+            cursor.execute(query, (
+                order['order_id'],
+                'iniciado',
+                'Solicitud recibida, enviando a procesamiento...',
+                5,
+                json.dumps({
+                    'email': email,
+                    'iniciado_en': datetime.now().isoformat()
+                })
+            ))
+            conn.commit()
+            logger.info("✅ Registro de status creado correctamente")
+        except Exception as e:
+            logger.warning(f"⚠️  No se pudo crear registro de status: {e}")
+            # No bloqueamos el proceso si falla esto
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    # ========================================================================
     # ENVIAR A N8N
     # ========================================================================
 
@@ -471,27 +515,134 @@ def procesar_factura():
     # Procesar respuesta de n8n
     logger.info("📨 Procesando respuesta de n8n...")
 
-    if response.get('success'):
-        # Limpiar sesión
-        session.pop('order_data', None)
-
-        mensaje = response.get('message',
-            f'¡Solicitud enviada! Recibirás tu factura en: {email}')
-        logger.info(f"✅ ÉXITO TOTAL - {mensaje}")
-        flash(mensaje, 'success')
-        return redirect(url_for('exito', order_id=order['order_id']))
-    else:
-        # n8n retornó error (pedido no elegible, error en Odoo, etc.)
-        error_msg = response.get('message', 'Error al procesar la factura')
-        logger.error(f"❌ n8n reportó error: {error_msg}")
-        flash(error_msg, 'error')
+    if not success:
+        error_msg = response.get('error', 'Error desconocido')
+        logger.error(f"❌ Falló el envío a n8n: {error_msg}")
+        flash(f'No se pudo procesar la solicitud: {error_msg}', 'error')
         return redirect(url_for('facturar', order_id=order['order_id']))
+
+    # Solicitud enviada exitosamente a n8n
+    # Redirigir a página de "procesando" con loader en tiempo real
+    logger.info(f"✅ Solicitud enviada a n8n para procesamiento")
+    return redirect(url_for('procesando', order_id=order['order_id']))
+
+
+@app.route('/procesando/<order_id>')
+def procesando(order_id):
+    """
+    Página de procesamiento en tiempo real
+    Muestra loader y consulta el estado cada 2 segundos via AJAX
+    """
+    # Obtener receiver_id de la sesión si existe
+    order_data = session.get('order_data', {})
+    receiver_id = order_data.get('receiver_id', 'N/A')
+
+    return render_template('procesando.html',
+                         order_id=order_id,
+                         receiver_id=receiver_id)
 
 
 @app.route('/exito/<order_id>')
 def exito(order_id):
     """Página de confirmación exitosa"""
     return render_template('exito.html', order_id=order_id)
+
+
+@app.route('/faq/<order_id>')
+def faq(order_id):
+    """
+    Página de preguntas frecuentes y ayuda
+    Muestra estatus de pago y envío desde las tablas de ML
+    """
+    conn = get_db_connection()
+    if not conn:
+        flash('Error de conexión.', 'error')
+        return redirect(url_for('index'))
+
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Buscar información del pedido
+        query_order = """
+            SELECT
+                o.order_id,
+                o.pack_id,
+                o.paid_amount,
+                o.buyer_nickname,
+                o.currency_id,
+                o.shipping_id,
+                o.payments_0_id as payment_id
+            FROM public.orden_ml o
+            WHERE o.order_id = %s OR o.pack_id = %s
+        """
+        cursor.execute(query_order, (order_id, order_id))
+        order = cursor.fetchone()
+
+        if not order:
+            flash('No se encontró información del pedido.', 'error')
+            return redirect(url_for('index'))
+
+        # Consultar estado del envío (shipment)
+        shipment_status = None
+        if order.get('shipping_id'):
+            query_shipment = """
+                SELECT
+                    id,
+                    status,
+                    substatus,
+                    tracking_number,
+                    date_created,
+                    status_history_date_shipped,
+                    status_history_date_delivered,
+                    status_history_date_ready_to_ship,
+                    status_history_date_cancelled,
+                    logistic_type,
+                    receiver_address_receiver_name,
+                    receiver_address_city_name,
+                    receiver_address_state_name
+                FROM public.shipment
+                WHERE id = %s
+            """
+            cursor.execute(query_shipment, (order['shipping_id'],))
+            shipment_status = cursor.fetchone()
+
+        # Consultar estado del pago (pagos_mercadopago)
+        payment_status = None
+        if order.get('payment_id'):
+            query_payment = """
+                SELECT
+                    id,
+                    status,
+                    status_detail,
+                    date_approved,
+                    date_created,
+                    transaction_amount,
+                    payment_method_id,
+                    payment_type_id,
+                    currency_id,
+                    money_release_status,
+                    money_release_date,
+                    odoo_reccord
+                FROM public.pagos_mercadopago
+                WHERE id = %s
+            """
+            cursor.execute(query_payment, (order['payment_id'],))
+            payment_status = cursor.fetchone()
+
+        return render_template('faq.html',
+                             order=order,
+                             shipment_status=shipment_status,
+                             payment_status=payment_status)
+
+    except Exception as e:
+        app.logger.error(f"Error en FAQ: {e}")
+        flash('Error al cargar la información.', 'error')
+        return redirect(url_for('index'))
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 # ============================================================================
@@ -620,6 +771,84 @@ def webhook_actualizar_estado():
     except Exception as e:
         app.logger.error(f"Error actualizando estado: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# API - ENDPOINTS PÚBLICOS
+# ============================================================================
+
+@app.route('/api/status/<order_id>', methods=['GET'])
+def api_get_status(order_id):
+    """
+    Endpoint para consultar el estado de una solicitud en tiempo real
+    Usado por la página de "procesando" con AJAX polling
+
+    Respuesta:
+    {
+        "success": true,
+        "estado": "creando_factura",
+        "mensaje": "Creando factura en Odoo...",
+        "progreso": 65,
+        "detalles": {...},
+        "updated_at": "2024-01-01T12:00:00"
+    }
+    """
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({
+            'success': False,
+            'error': 'Error de conexión a base de datos'
+        }), 500
+
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        query = """
+            SELECT
+                order_id,
+                estado,
+                mensaje,
+                progreso,
+                detalles,
+                created_at,
+                updated_at
+            FROM solicitudes_status
+            WHERE order_id = %s
+            ORDER BY updated_at DESC
+            LIMIT 1
+        """
+        cursor.execute(query, (order_id,))
+        status = cursor.fetchone()
+
+        if not status:
+            return jsonify({
+                'success': False,
+                'error': 'No se encontró información de esta solicitud',
+                'estado': 'no_encontrado'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'order_id': status['order_id'],
+            'estado': status['estado'],
+            'mensaje': status['mensaje'],
+            'progreso': status['progreso'],
+            'detalles': status['detalles'],
+            'created_at': status['created_at'].isoformat() if status['created_at'] else None,
+            'updated_at': status['updated_at'].isoformat() if status['updated_at'] else None
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Error obteniendo estado: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 # ============================================================================
@@ -872,8 +1101,8 @@ def portal_dashboard():
         stats = {
             'total_facturas': len(facturas),
             'monto_total': sum(f['amount'] for f in facturas),
-            'facturas_pendientes': sum(1 for f in facturas if f['payment_status'] == 'pending'),
-            'facturas_pagadas': sum(1 for f in facturas if f['payment_status'] == 'paid'),
+            'facturas_pendientes': sum(1 for f in facturas if f['payment_status'] == 'pendiente'),
+            'facturas_pagadas': sum(1 for f in facturas if f['payment_status'] == 'pagado'),
         }
 
         return render_template(

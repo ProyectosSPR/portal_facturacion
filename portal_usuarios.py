@@ -261,8 +261,8 @@ def portal_dashboard():
         stats = {
             'total_facturas': len(facturas),
             'monto_total': sum(f['amount'] for f in facturas),
-            'facturas_pendientes': sum(1 for f in facturas if f['payment_status'] == 'pending'),
-            'facturas_pagadas': sum(1 for f in facturas if f['payment_status'] == 'paid'),
+            'facturas_pendientes': sum(1 for f in facturas if f['payment_status'] == 'pendiente'),
+            'facturas_pagadas': sum(1 for f in facturas if f['payment_status'] == 'pagado'),
         }
 
         return render_template(
@@ -642,7 +642,7 @@ def api_facturas_stats():
                 DATE_TRUNC('month', created_at) as mes,
                 COUNT(*) as total,
                 SUM(amount) as monto_total,
-                COUNT(CASE WHEN payment_status = 'paid' THEN 1 END) as pagadas
+                COUNT(CASE WHEN payment_status = 'pagado' THEN 1 END) as pagadas
             FROM facturas
             WHERE usuario_id = %s
             GROUP BY DATE_TRUNC('month', created_at)

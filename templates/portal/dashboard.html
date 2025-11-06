@@ -231,7 +231,7 @@
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <span class="badge badge-status bg-{{ 'success' if factura.payment_status == 'paid' else 'warning' if factura.payment_status == 'pending' else 'info' }}">
+                                                        <span class="badge badge-status bg-{{ 'success' if factura.payment_status == 'pagado' else 'warning' if factura.payment_status == 'pendiente' else 'info' }}">
                                                             {{ factura.payment_status }}
                                                         </span>
                                                     </td>
