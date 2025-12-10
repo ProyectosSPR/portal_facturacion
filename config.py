@@ -25,6 +25,7 @@ class Config:
 
     # n8n - Orquestador de Workflows
     N8N_WEBHOOK_URL = os.getenv('N8N_WEBHOOK_URL', 'https://aut.automateai.com.mx/webhook-test/a86064e4-d5ef-4abe-85cd-be0362757f88')
+    N8N_DOWNLOAD_WEBHOOK_URL = os.getenv('N8N_DOWNLOAD_WEBHOOK_URL', 'https://aut.automateai.com.mx/webhook/download-factura')
 
     # Portal de Usuarios - URL pública
     PORTAL_URL = os.getenv('PORTAL_URL', 'http://localhost:5000/portal/login')

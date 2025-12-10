@@ -10,6 +10,7 @@ import re
 import json
 import base64
 import magic
+import io
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import requests
@@ -1170,7 +1171,7 @@ def portal_factura_detalle(factura_id):
 @app.route('/portal/factura/<int:factura_id>/pdf')
 @login_required
 def portal_descargar_pdf(factura_id):
-    """Descargar PDF de factura"""
+    """Descargar PDF de factura desde webhook de n8n"""
     usuario_id = session['usuario_id']
 
     conn = get_db_connection()
@@ -1183,7 +1184,7 @@ def portal_descargar_pdf(factura_id):
 
         # Verificar que la factura pertenece al usuario
         query = """
-            SELECT pdf_url, order_id
+            SELECT invoice_id, invoice_name, order_id
             FROM facturas
             WHERE id = %s AND usuario_id = %s
         """
@@ -1194,23 +1195,41 @@ def portal_descargar_pdf(factura_id):
             flash('Factura no encontrada.', 'error')
             return redirect(url_for('portal_dashboard'))
 
-        if not factura['pdf_url']:
-            flash('PDF no disponible aún.', 'warning')
-            return redirect(url_for('portal_factura_detalle', factura_id=factura_id))
+        # Preparar payload para n8n
+        payload = {
+            'invoice_id': factura['invoice_id'],
+            'invoice_name': factura['invoice_name'],
+            'order_id': factura['order_id'],
+            'tipo_archivo': 'pdf'
+        }
 
-        # Verificar si existe el archivo
-        file_path = factura['pdf_url']
-        if os.path.exists(file_path):
+        logger.info(f"Solicitando PDF de factura {factura['invoice_name']} a n8n")
+
+        # Hacer petición al webhook de n8n
+        response = requests.post(
+            Config.N8N_DOWNLOAD_WEBHOOK_URL,
+            json=payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            # n8n devuelve el archivo PDF
             return send_file(
-                file_path,
+                io.BytesIO(response.content),
                 mimetype='application/pdf',
                 as_attachment=True,
                 download_name=f"factura_{factura['order_id']}.pdf"
             )
         else:
-            flash('Archivo no encontrado.', 'error')
+            logger.error(f"Error al obtener PDF de n8n: {response.status_code} - {response.text}")
+            flash('No se pudo descargar el PDF. Intenta nuevamente.', 'error')
             return redirect(url_for('portal_factura_detalle', factura_id=factura_id))
 
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error conectando con n8n para descargar PDF: {e}")
+        flash('Error al conectar con el servicio de descarga.', 'error')
+        return redirect(url_for('portal_factura_detalle', factura_id=factura_id))
     except Exception as e:
         app.logger.error(f"Error descargando PDF: {e}")
         flash('Error al descargar PDF.', 'error')
@@ -1225,7 +1244,7 @@ def portal_descargar_pdf(factura_id):
 @app.route('/portal/factura/<int:factura_id>/xml')
 @login_required
 def portal_descargar_xml(factura_id):
-    """Descargar XML de factura"""
+    """Descargar XML de factura desde webhook de n8n"""
     usuario_id = session['usuario_id']
 
     conn = get_db_connection()
@@ -1238,7 +1257,7 @@ def portal_descargar_xml(factura_id):
 
         # Verificar que la factura pertenece al usuario
         query = """
-            SELECT xml_url, order_id
+            SELECT invoice_id, invoice_name, order_id
             FROM facturas
             WHERE id = %s AND usuario_id = %s
         """
@@ -1249,23 +1268,41 @@ def portal_descargar_xml(factura_id):
             flash('Factura no encontrada.', 'error')
             return redirect(url_for('portal_dashboard'))
 
-        if not factura['xml_url']:
-            flash('XML no disponible aún.', 'warning')
-            return redirect(url_for('portal_factura_detalle', factura_id=factura_id))
+        # Preparar payload para n8n
+        payload = {
+            'invoice_id': factura['invoice_id'],
+            'invoice_name': factura['invoice_name'],
+            'order_id': factura['order_id'],
+            'tipo_archivo': 'xml'
+        }
 
-        # Verificar si existe el archivo
-        file_path = factura['xml_url']
-        if os.path.exists(file_path):
+        logger.info(f"Solicitando XML de factura {factura['invoice_name']} a n8n")
+
+        # Hacer petición al webhook de n8n
+        response = requests.post(
+            Config.N8N_DOWNLOAD_WEBHOOK_URL,
+            json=payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            # n8n devuelve el archivo XML
             return send_file(
-                file_path,
+                io.BytesIO(response.content),
                 mimetype='application/xml',
                 as_attachment=True,
                 download_name=f"factura_{factura['order_id']}.xml"
             )
         else:
-            flash('Archivo no encontrado.', 'error')
+            logger.error(f"Error al obtener XML de n8n: {response.status_code} - {response.text}")
+            flash('No se pudo descargar el XML. Intenta nuevamente.', 'error')
             return redirect(url_for('portal_factura_detalle', factura_id=factura_id))
 
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error conectando con n8n para descargar XML: {e}")
+        flash('Error al conectar con el servicio de descarga.', 'error')
+        return redirect(url_for('portal_factura_detalle', factura_id=factura_id))
     except Exception as e:
         app.logger.error(f"Error descargando XML: {e}")
         flash('Error al descargar XML.', 'error')
