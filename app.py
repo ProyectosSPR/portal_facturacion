@@ -400,15 +400,14 @@ def procesar_factura():
         flash('El monto pagado debe ser un número válido.', 'error')
         return redirect(url_for('facturar', order_id=order['order_id']))
 
-    # Validar monto (tolerancia de 0.01)
+    # Validar monto (tolerancia de 0.01) - DESHABILITADO: Se permite avanzar aunque no coincida
     diferencia = abs(monto_pagado_float - order['paid_amount'])
     logger.info(f"  - Validando monto: {monto_pagado_float} vs {order['paid_amount']} (diff: {diferencia})")
 
     if diferencia > 0.01:
-        os.remove(file_path)
-        logger.error(f"❌ Monto no coincide - Esperado: {order['paid_amount']}, Recibido: {monto_pagado_float}")
-        flash(f"El monto ingresado no coincide con el monto del pedido (${order['paid_amount']}).", 'error')
-        return redirect(url_for('facturar', order_id=order['order_id']))
+        logger.warning(f"⚠️ Monto no coincide - Esperado: {order['paid_amount']}, Recibido: {monto_pagado_float} - Se permite continuar")
+        flash(f"Advertencia: El monto ingresado ({monto_pagado_float}) difiere del monto del pedido (${order['paid_amount']}).", 'warning')
+    # La validación ya no bloquea el proceso, se permite continuar
 
     logger.info("✅ Todos los datos del formulario son válidos")
 
